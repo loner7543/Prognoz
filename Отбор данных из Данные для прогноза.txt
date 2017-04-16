@@ -31,7 +31,7 @@ public class Laba2 {
         int l=0;
         int k=0;
         try {
-            Scanner scanner = new Scanner(new File("������ ��� ��������.txt"));
+            Scanner scanner = new Scanner(new File("������ ��� ��������.txt"));
             fileWriter = new FileWriter("train_data.txt", false);
             fileWriter_test=new FileWriter("test_data.txt",false);
             while (scanner.hasNextLine()) {
@@ -50,21 +50,21 @@ public class Laba2 {
 
             double dif_data[]=new double[250];
             for (int i=0;i<k;i++)
-                dif_data[i]=data[i][0]-data[i][1];
+                dif_data[i]=data[i][0]-data[i][1];//нашли разницу между маес и миниммумом
 
             double square_sums=0;
             for (int i=0;i<k;i++)
-                square_sums+=dif_data[i]*dif_data[i];
+                square_sums+=dif_data[i]*dif_data[i];//сумма кварратов под корнем
             square_sums=Math.sqrt(square_sums);
 
             for (int i=0;i<k;i++)
-                dif_data[i]/=square_sums;
+                dif_data[i]/=square_sums;// поделили и получили нормализованное число
 
 
             for (int j = 0; j <250; j++) {
 
                 if (j>199) {
-                    fileWriter_test.write(String.valueOf(dif_data[j]));
+                    fileWriter_test.write(String.valueOf(dif_data[j]));// записали число в файл либо в обучающую , либо  в тестовую
                     fileWriter_test.write(" ");
                 }
                 else {
