@@ -10,7 +10,7 @@ public class Perceptrone_model {
     double output_of_layers[][]; //выходы нейронов; 1 - слой; 2 - номер нейрона;
     double biases[][]; //смещения; 1 - слой; 2 - номер нейрона;
     double errors[][]; //ошибки в нейронах; используется для алгоритма обратного распространения ошибки;
-    double gradient_of_weights[][][]; //градиент для весов;
+    double gradient_of_weights[][][]; //градиент для весов;Исп-ся в наискорейшем спуске
     int kol_of_layers; //количество слоев в нейронной сети;
     double gradient_of_biases[][]; //градиент для смещений;
     double learn_rate=0.1;//cкорость обучения;
@@ -27,7 +27,7 @@ public class Perceptrone_model {
         if (kol_layers < 2) System.exit(0);
         layers = new double[kol_layers][];
         kol_of_layers = kol_layers;
-        output_of_layers = new double[kol_layers][];
+        output_of_layers = new double[kol_layers][];// масссив выходных значений по кол ву слоев
         biases = new double[kol_layers][];
         weights = new double[kol_layers - 1][][];
         errors = new double[kol_layers][];
@@ -67,8 +67,8 @@ public class Perceptrone_model {
     //инициализация весов 1 слоя;
     public void Set_the_first_layer(double[] x) {
         for (int i = 0; i < layers[0].length; i++) {
-            layers[0][i] = x[i];
-            output_of_layers[0][i] = x[i];
+            layers[0][i] = x[i];// установить значение пейрону
+            output_of_layers[0][i] = x[i];// передать значение на соседний слой
         }
     }
 
@@ -82,42 +82,20 @@ public class Perceptrone_model {
         return sigmoid(x) * (1 - sigmoid(x));
     }
 
-    //прямое распротранение
+    //прямое распространение используется при обучении сети
     public void feed_forward() {
         double buffer = 0;
 
-        for (int i = 0; i < weights.length; i++) {
+        for (int i = 0; i < weights.length; i++) {//идем по массиву весов
             for (int j = 0; j < output_of_layers[i + 1].length; j++) {
-                for (int z = 0; z < output_of_layers[i].length; z++)
-                    buffer += weights[i][j][z] * output_of_layers[i][z];
+                for (int z = 0; z < output_of_layers[i].length; z++)//обошли выходной слой. т.к сеть со скрытым слоем - то циклы вложенные
+                    buffer += weights[i][j][z] * output_of_layers[i][z];// с каждого слоя просуммировали вес
                     layers[i + 1][j] = buffer + biases[i + 1][j];
-                    output_of_layers[i + 1][j] = sigmoid(layers[i+1][j]);
+                    output_of_layers[i + 1][j] = sigmoid(layers[i+1][j]);// берем сигналы с выходного слоя и рассчитываем производную функции активации каждого слоя
                 buffer=0;
             }
         }
     }
-
-    //обнуление весов и смещений
-    public void set_zero_parametres() {
-        Random rand = new Random();
-
-        for (int i = 0; i < kol_of_layers; i++) {
-            for (int j = 0; j < biases[i].length; j++) {
-                if (i != 0) biases[i][j] = rand.nextGaussian();
-                else biases[i][j] = 0;
-                gradient_of_biases[i][j] = 0;
-            }
-            if (i != kol_of_layers - 1) {
-                for (int j = 0; j < weights[i].length; j++) {
-                    for (int z = 0; z < weights[i][j].length; z++) {
-                        weights[i][j][z] = rand.nextGaussian();
-                        gradient_of_weights[i][j][z] = 0;
-                    }
-                }
-            }
-        }
-    }
-
 
     //обратное распространение ошибки
     public void back_forward(double[] y) {
@@ -175,62 +153,6 @@ public class Perceptrone_model {
             buffer = data[i];
             data[i] = data[num];
             data[num] = buffer;
-        }
-
-    }
-
-    //ошибка для обучаемой выборки
-    public double erorr(double data[][]) {
-
-        double x[] = new double[layers[0].length+1];
-        double error = 0;
-        double errors[]=new double[data.length];
-        for (int i=0;i<errors.length;i++) errors[i]=0;
-
-        for (int i = 0; i < data.length; i++) {
-            for (int j = 0; j < layers[0].length; j++) {
-                x[j] = data[i][j];
-            }
-            Set_the_first_layer(x);
-            feed_forward();
-            for (int j = 0; j < layers[kol_of_layers - 1].length; j++)
-                if (j + 1 != data[i][layers[0].length])
-                    errors[i] += Math.pow(output_of_layers[kol_of_layers - 1][j] - 0, 2);
-                else errors[i] += Math.pow(output_of_layers[kol_of_layers - 1][j] - 1, 2);
-            errors[i]/=layers[kol_of_layers-1].length;
-            error+=errors[i];
-        }
-
-        error/=data.length;
-
-        error=Math.sqrt(error);
-
-        return error;
-    }
-
-    //обучений нейронной сети
-    public void training (double data[][],double test_data[][]  ){
-
-        double y[]=new double [layers[kol_of_layers-1].length];
-        double x[]=new double [layers[0].length];
-
-        for (int l=0;l<number_of_epoch;l++) {
-            for (int i = 0; i < data.length; i++) {
-                for (int j = 0; j < layers[kol_of_layers - 1].length; j++)
-                    if (j + 1 != data[i][layers[0].length])
-                        y[j] = 0;
-                    else {
-                        y[j] = 1;
-                    }
-                for (int j = 0; j < layers[0].length; j++)
-                    x[j] = data[i][j];
-                Set_the_first_layer(x);
-                feed_forward();
-                back_forward(y);
-                if ((i+1)%mini_batch==0) change_weights();
-            }
-            mix_data(data);
-
         }
 
     }
