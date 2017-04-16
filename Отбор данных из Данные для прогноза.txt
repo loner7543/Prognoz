@@ -1,6 +1,4 @@
-/**
- * Created by Egor on 12.11.2016.
- */
+
 import org.jetbrains.annotations.Contract;
 
 import java.io.*;

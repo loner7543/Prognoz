@@ -1,6 +1,3 @@
-/**
- * Created by Egor on 12.11.2016.
- */
 
 import java.io.*;
 import java.util.*;

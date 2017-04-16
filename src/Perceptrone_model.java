@@ -9,7 +9,7 @@ public class Perceptrone_model {
     double layers[][]; //значения нейронов; 1 - слой; 2 - номер нейрона;
     double output_of_layers[][]; //выходы нейронов; 1 - слой; 2 - номер нейрона;
     double biases[][]; //смещения; 1 - слой; 2 - номер нейрона;
-    double errors[][]; //ошибки в нейронах; используется для алгоритма обратного распространения ошибки;
+    double errors[][]; //ошибки в нейронах; используется для алгоритма обратного распространения ошибки;1- слой 2-нейрон
     double gradient_of_weights[][][]; //градиент для весов;Исп-ся в наискорейшем спуске
     int kol_of_layers; //количество слоев в нейронной сети;
     double gradient_of_biases[][]; //градиент для смещений;
@@ -97,9 +97,9 @@ public class Perceptrone_model {
         }
     }
 
-    //обратное распространение ошибки
+    //обратное распространение ошибки y - разница между факт и ожидаемым значением
     public void back_forward(double[] y) {
-        for (int i = 0; i < output_of_layers[kol_of_layers - 1].length; i++) {
+        for (int i = 0; i < output_of_layers[kol_of_layers - 1].length; i++) {// по 
             errors[kol_of_layers - 1][i] = (-y[i] + output_of_layers[kol_of_layers - 1][i]) * sigmoid_derivate(layers[kol_of_layers - 1][i]);
         }
 
@@ -108,7 +108,7 @@ public class Perceptrone_model {
         for (int i = kol_of_layers - 2; i >0; i--)
             for (int k = 0; k < output_of_layers[i].length; k++) {
                 for (int z = 0; z < output_of_layers[i + 1].length; z++)
-                    buffer += errors[i + 1][z] * weights[i][z][k];
+                    buffer += errors[i + 1][z] * weights[i][z][k];// произведение ошибки в нейроне на вес
                 errors[i][k] = buffer * sigmoid_derivate(layers[i][k]);// замена функции на произодную
                 buffer=0;
             }
@@ -116,7 +116,7 @@ public class Perceptrone_model {
         for (int i=0;i<kol_of_layers-1;i++)
             for (int k=0;k<output_of_layers[i+1].length;k++)
                 for (int z=0;z<output_of_layers[i].length;z++) {
-                    gradient_of_weights[i][k][z]+=errors[i+1][k]*output_of_layers[i][z];
+                    gradient_of_weights[i][k][z]+=errors[i+1][k]*output_of_layers[i][z];// рассчет вектора градиента
                 }
 
         for (int i=1;i<kol_of_layers;i++)
@@ -128,41 +128,28 @@ public class Perceptrone_model {
     //изменение параметров сети c применением момента
     public void change_weights() {
         for (int i = 0; i < kol_of_layers - 1; i++)// перебираем слои за искл входного слоя
-            for (int k = 0; k < output_of_layers[i + 1].length; k++)
-                for (int z = 0; z < output_of_layers[i].length; z++) {
+            for (int k = 0; k < output_of_layers[i + 1].length; k++)// по каждому сигналу входного  слоя
+                for (int z = 0; z < output_of_layers[i].length; z++) {// по каждому сигналу входного слоя
                     weights[i][k][z] += -gradient_of_weights[i][k][z] * learn_rate / (double) mini_batch + Lambda * (weights[i][k][z] - previous_weights[i][k][z]);//формула корректировки ввеса
+                    //Используется алогритм стахостического градиента. Принимает выборку, выдает вектор весов Дает менять параметры после каждого прохода обучения - эьо его достоинство
                     gradient_of_weights[i][k][z] = 0;
                     previous_weights[i][k][z] = weights[i][k][z];
                 }
 
         for (int i = 1; i < kol_of_layers - 1; i++)
             for (int j = 0; j < biases[i].length; j++) {
-                biases[i][j] -= gradient_of_biases[i][j] * learn_rate / (double) mini_batch;
+                biases[i][j] -= gradient_of_biases[i][j] * learn_rate / (double) mini_batch;// вычисляем насколько изменилось каждое занчение веса
                 gradient_of_biases[i][j] = 0;
             }
     }
 
-    //перемешать обучающую выборку
-    void mix_data(double data[][]){
-        Random random = new Random();
-        double buffer[];
-        int num;
-
-        for(int i=0;i<data.length;i++) {
-            num = 0 + random.nextInt(data.length - 0);
-            buffer = data[i];
-            data[i] = data[num];
-            data[num] = buffer;
-        }
-
-    }
 
     //ошибка прогнозирования
     public void error_prognosation(double estimates[],double real_data[]){
 
         double error=0;
         for (int i = 0; i < real_data.length; i++) {
-               error+=Math.pow(estimates[i]-real_data[i],2);
+               error+=Math.pow(estimates[i]-real_data[i],2);//берем кваррат разности между спрогнозироанным и реальным значениями
         }
 
         error=Math.sqrt(error);
@@ -177,22 +164,25 @@ public class Perceptrone_model {
         int ind=0;
         double estimates[]=new double[layers[0].length+data_test.length];
         double x[]=new double [layers[0].length];
-        for (int i=0;i<layers[0].length;i++)
-            estimates[i]=data_train[data_train.length-5+i];
+        for (int i=0;i<layers[0].length;i++)// по всем нейронам первого слоя
+            estimates[i]=data_train[data_train.length-5+i];// взять 6-е значение и сделать его спрогнозированным Оценки на тренировочной выборке
         double estimates_test[]=new double[data_test.length];
+        //инициализируются первые 5 оценок
+        //остальные двльше в while
 
         ind=0;//хранит положение начала окна
 
+        /////////САМО ПРОГНОЗИРОВАНИЕ
         while(ind!=data_test.length){// идем по выборке
             for (int j=0;j<layers[0].length;j++)
                 x[j]=estimates[j+ind];//взяли 5 значений в окне и подали его на вход сети
             Set_the_first_layer(x);// подали на вход и установили веса
-            feed_forward();//сделали прямое распространение
+            feed_forward();//сделали прямое распространение сигнала
             estimates[ind+layers[0].length]=output_of_layers[kol_of_layers-1][0];// взяли значение с соответствующего слоя и соотв нейрона в этом слое1- слойб2-нейрон
             ind++;// сдвигаем окно на 1
         }
         for (int i=0;i<data_test.length;i++) {
-            estimates_test[i] = estimates[i + layers[0].length];
+            estimates_test[i] = estimates[i + layers[0].length];// заполнили массив спрогнозированных значений
         }
         error_prognosation(estimates_test,data_test);// вычисляем ошибку на тестовых данных
         return estimates_test;
@@ -202,23 +192,23 @@ public class Perceptrone_model {
     public void prognos_train(double data_train[],double data_test[]) {
 
         System.out.println("Подождите, идет процесс обучения сети!");
-        double y[] = new double[layers[kol_of_layers - 1].length];
-        double x[] = new double[layers[0].length];
+        double y[] = new double[layers[kol_of_layers - 1].length];// все последующие слои
+        double x[] = new double[layers[0].length];// входной слой
         int ind = 0;
         int m=0;
         for (int k = 0; k < number_of_epoch; k++) {
             if (k+1%2000==0) learn_rate/=100;// уменьшаем величину шага чтобы не перескочить минимум
-            while (ind + layers[0].length != data_train.length) {
+            while (ind + layers[0].length != data_train.length) {//первые 5 значений
                 for (int j = 0; j < layers[0].length; j++)
-                    x[j] = data_train[j + ind];
+                    x[j] = data_train[j + ind];// для перого слоя
                 if (ind + layers[0].length == data_train.length)
                     for (int j = 0; j < y.length; j++)
                         y[j] = data_test[j];
                 else
                     for (int j = 0; j < y.length; j++)
-                        y[j] = data_train[ind + layers[0].length];
+                        y[j] = data_train[ind + layers[0].length];// высчитать разницу между факт и ожидаемым
 
-                Set_the_first_layer(x);
+                Set_the_first_layer(x);//инициализировать веса 1го слоя
                 feed_forward();// создать сеть прямого распространения
                 back_forward(y);// создать сеть обраного распространения
                 m++;
